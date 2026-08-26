@@ -21,7 +21,7 @@ import { Checkout } from '@/pages/Pedidos/Checkout'
 import { MeusPedidos } from '@/pages/Pedidos/MeusPedidos'
 import { NovaReserva } from '@/pages/Reservas/NovaReserva'
 import { MinhasReservas } from '@/pages/Reservas/MinhasReservas'
-import { Pagamento } from '@/pages/Pagamento'
+import { Pagamento } from "@/pages/Pagamento/index.tsx";
 
 // Páginas Admin
 import { AdminDashboard } from '@/pages/Admin/Dashboard'
