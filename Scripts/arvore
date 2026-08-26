@@ -1,0 +1,107 @@
+frontend/
+├── index.html
+├── package.json
+├── vite.config.ts
+├── tailwind.config.js
+├── postcss.config.js
+├── tsconfig.json
+├── tsconfig.node.json
+├── .env
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx
+│   ├── routes.tsx
+│   │
+│   ├── api/
+│   │   ├── client.ts
+│   │   ├── auth.ts
+│   │   ├── produtos.ts
+│   │   ├── mesas.ts
+│   │   ├── reservas.ts
+│   │   ├── pedidos.ts
+│   │   └── pagamento.ts
+│   │
+│   ├── store/
+│   │   ├── authStore.ts
+│   │   ├── cartStore.ts
+│   │   ├── reservaStore.ts
+│   │   └── pedidoStore.ts
+│   │
+│   ├── pages/
+│   │   ├── Home/
+│   │   │   └── index.tsx
+│   │   ├── Cardapio/
+│   │   │   └── index.tsx
+│   │   ├── Reservas/
+│   │   │   ├── NovaReserva.tsx
+│   │   │   └── MinhasReservas.tsx
+│   │   ├── Pedidos/
+│   │   │   ├── Carrinho.tsx
+│   │   │   ├── Checkout.tsx
+│   │   │   └── MeusPedidos.tsx
+│   │   ├── Auth/
+│   │   │   ├── Login.tsx
+│   │   │   └── Register.tsx
+│   │   └── Admin/
+│   │       ├── Dashboard.tsx
+│   │       ├── Produtos/
+│   │       │   ├── Lista.tsx
+│   │       │   ├── Criar.tsx
+│   │       │   └── Editar.tsx
+│   │       └── Mesas/
+│   │           ├── Lista.tsx
+│   │           └── Criar.tsx
+│   │
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── Layout/
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── Footer.tsx
+│   │   │   │   └── Sidebar.tsx
+│   │   │   ├── Loading.tsx
+│   │   │   ├── Toast.tsx
+│   │   │   ├── Modal.tsx
+│   │   │   └── ProtectedRoute.tsx
+│   │   │
+│   │   ├── produtos/
+│   │   │   ├── CardProduto.tsx
+│   │   │   ├── ListaProdutos.tsx
+│   │   │   └── FiltrosProdutos.tsx
+│   │   │
+│   │   ├── mesas/
+│   │   │   ├── MapaMesas.tsx
+│   │   │   └── CardMesa.tsx
+│   │   │
+│   │   ├── reservas/
+│   │   │   └── FormReserva.tsx
+│   │   │
+│   │   └── pedidos/
+│   │       ├── ItemCarrinho.tsx
+│   │       ├── ResumoPedido.tsx
+│   │       └── StatusBadge.tsx
+│   │
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   ├── useCart.ts
+│   │   ├── useToast.ts
+│   │   └── useApi.ts
+│   │
+│   ├── types/
+│   │   ├── auth.types.ts
+│   │   ├── produto.types.ts
+│   │   ├── mesa.types.ts
+│   │   ├── reserva.types.ts
+│   │   └── pedido.types.ts
+│   │
+│   ├── schemas/
+│   │   ├── auth.schema.ts
+│   │   ├── produto.schema.ts
+│   │   └── pedido.schema.ts
+│   │
+│   ├── utils/
+│   │   ├── formatters.ts
+│   │   ├── validators.ts
+│   │   └── constants.ts
+│   │
+│   └── styles/
+│       └── index.css
