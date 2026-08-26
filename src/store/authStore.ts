@@ -43,19 +43,35 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (data) => {
-        set({ isLoading: true })  // Começa loading
+        set({ isLoading: true })
         try {
+          // 1. Registra
           await authApi.register(data)
+          
+          // 2. Faz login
           const loginResponse = await authApi.login(data.email, data.password)
+          
+          // 3. ✅ SALVA O TOKEN PRIMEIRO (e AGUARDA)
           set({ token: loginResponse.access_token, isAuthenticated: true })
+          
+          // 4. ✅ FORÇA O INTERCEPTOR A USAR O NOVO TOKEN
+          // Pequeno delay para garantir que o estado foi atualizado
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
+          // 5. Busca o usuário (agora com o token disponível)
           const userData = await authApi.getCurrentUser()
-          set({ user: userData, isLoading: false })  // Termina loading
+          
+          // 6. Atualiza o estado
+          set({ user: userData, isLoading: false })
+          
           return userData
         } catch (error) {
-          set({ isLoading: false })  // Termina loading em erro
+          set({ isLoading: false })
           throw error
         }
       },
+
+      
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false })
       },
