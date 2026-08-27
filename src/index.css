@@ -3,11 +3,13 @@
 @import "tailwindcss";
 
 /* ============================================================
-   PALETA DE CORES - LUXO (Dourado e Marrom)
+   TEMA - PALETA DE CORES LUXO (Dourado e Marrom)
    ============================================================ */
 
+
+
 @theme {
-  /* Cores Principais - Dourado */
+  /* Dourado */
   --color-gold-50: #fdf7e6;
   --color-gold-100: #f9ebc0;
   --color-gold-200: #f5df96;
@@ -19,31 +21,7 @@
   --color-gold-800: #7f4e0e;
   --color-gold-900: #633008;
 
-  /* Cores - Bronze */
-  --color-bronze-50: #f8f0e6;
-  --color-bronze-100: #edd9c4;
-  --color-bronze-200: #e2c2a2;
-  --color-bronze-300: #d7ab80;
-  --color-bronze-400: #cc945e;
-  --color-bronze-500: #b87a40;
-  --color-bronze-600: #9c6430;
-  --color-bronze-700: #804e20;
-  --color-bronze-800: #643810;
-  --color-bronze-900: #482200;
-
-  /* Cores - Creme/Champanhe */
-  --color-cream-50: #fefcf8;
-  --color-cream-100: #fbf7ed;
-  --color-cream-200: #f8f0da;
-  --color-cream-300: #f5e9c7;
-  --color-cream-400: #f2e2b4;
-  --color-cream-500: #ecd4a1;
-  --color-cream-600: #d4b88a;
-  --color-cream-700: #b89c72;
-  --color-cream-800: #9c805a;
-  --color-cream-900: #806442;
-
-  /* Cores - Marrom */
+  /* Marrom */
   --color-brown-50: #f8f3ee;
   --color-brown-100: #ede0d6;
   --color-brown-200: #dcc4b4;
@@ -55,34 +33,17 @@
   --color-brown-800: #522c20;
   --color-brown-900: #381610;
 
-  /* Cores - Champagne */
-  --color-champagne-50: #fdfcfa;
-  --color-champagne-100: #faf7f2;
-  --color-champagne-200: #f5efe6;
-  --color-champagne-300: #f0e7d9;
-  --color-champagne-400: #ebdfcc;
-  --color-champagne-500: #e0d0b8;
-  --color-champagne-600: #c8b498;
-  --color-champagne-700: #b09878;
-  --color-champagne-800: #987c58;
-  --color-champagne-900: #806038;
-
-  /* Cores de Estado */
-  --color-success: #5a8a40;
-  --color-success-light: #7aaa60;
-  --color-success-dark: #3a6a20;
-
-  --color-error: #b84a4a;
-  --color-error-light: #d46a6a;
-  --color-error-dark: #8a2a2a;
-
-  --color-warning: #d4a82e;
-  --color-warning-light: #e8c84a;
-  --color-warning-dark: #b8881a;
-
-  --color-info: #4a7a9a;
-  --color-info-light: #6a9aba;
-  --color-info-dark: #2a5a7a;
+  /* Creme/Champanhe */
+  --color-cream-50: #fefcf8;
+  --color-cream-100: #fbf7ed;
+  --color-cream-200: #f8f0da;
+  --color-cream-300: #f5e9c7;
+  --color-cream-400: #f2e2b4;
+  --color-cream-500: #ecd4a1;
+  --color-cream-600: #d4b88a;
+  --color-cream-700: #b89c72;
+  --color-cream-800: #9c805a;
+  --color-cream-900: #806442;
 
   /* Fontes */
   --font-display: "Playfair Display", serif;
@@ -94,95 +55,37 @@
   --shadow-gold: 0 4px 20px rgba(212, 168, 46, 0.3);
 }
 
-/* ============================================================
-   CONFIGURAÇÕES GLOBAIS
-   ============================================================ */
-
-@layer base {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+@keyframes toast-progress {
+    from { width: 100%; }
+    to { width: 0%; }
   }
 
-  html {
-    scroll-behavior: smooth;
+  .toast-enter {
+    animation: toast-slide-in 0.3s ease-out forwards;
   }
 
-  body {
-    font-family: var(--font-body);
-    color: var(--color-brown-700);
-    background-color: var(--color-cream-50);
+  .toast-exit {
+    animation: toast-slide-out 0.2s ease-in forwards;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    color: var(--color-brown-800);
+  @keyframes toast-slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(40px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
   }
 
-  ::selection {
-    background: var(--color-gold-500);
-    color: var(--color-cream-50);
+  @keyframes toast-slide-out {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(40px) scale(0.95);
+    }
   }
-}
-
-/* ============================================================
-   UTILITÁRIOS CUSTOMIZADOS
-   ============================================================ */
-
-@layer utilities {
-  .text-gold-gradient {
-    background: linear-gradient(135deg, var(--color-gold-500) 0%, var(--color-gold-200) 50%, var(--color-gold-500) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .bg-luxury-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a82e' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-}
-
-/* ============================================================
-   ANIMAÇÕES
-   ============================================================ */
-
-@keyframes gold-shine {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 1.5s infinite;
-}
-
-.animate-gold-shine {
-  background: linear-gradient(90deg, var(--color-gold-500) 0%, var(--color-gold-200) 25%, var(--color-gold-500) 50%, var(--color-gold-200) 75%, var(--color-gold-500) 100%);
-  background-size: 200% auto;
-  animation: gold-shine 3s linear infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.banner-visualizacao {
-  background: linear-gradient(90deg, #fef3c7, #fde68a);
-  border-bottom: 1px solid #f59e0b;
-}
-
-.banner-visualizacao span {
-  color: #92400e;
-}

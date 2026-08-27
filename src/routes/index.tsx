@@ -14,6 +14,8 @@ import { Login } from '@/pages/Auth/Login'
 import { Register } from '@/pages/Auth/Register'
 import { Cardapio } from '@/pages/Cardapio'
 import { DetalheProduto } from '@/pages/Produto/Detalhe'
+import { Sobre } from '@/pages/Sobre'
+import { Contato } from '@/pages/Contato'
 
 // Páginas Privadas (Clientes)
 import { Carrinho } from '@/pages/Pedidos/Carrinho'
@@ -60,6 +62,14 @@ export const router = createBrowserRouter([
         path: '/esqueci-senha',
         element: <ForgotPassword />,
       },
+      {
+        path: '/sobre',
+        element: <Sobre />
+      },
+      {
+        path: '/contato',
+        element: <Contato />
+      }
     ],
   },
 
