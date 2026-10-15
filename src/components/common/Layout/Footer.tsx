@@ -92,7 +92,7 @@ export function Footer() {
   return (
     <footer 
       ref={footerRef}
-      className="relative bg-gradient-to-b from-brown-900 to-brown-950 text-cream-50 overflow-hidden"
+      className="relative bg-brown-900 text-cream-50 overflow-hidden"
     >
       {/* ============================================================ */}
       {/* DECORATIVE BACKGROUND */}

@@ -3,13 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Tag, 
+import {
+  Package,
+  Plus,
+  Search,
+  Edit,
+  Trash2,
   DollarSign,
   Sparkles,
   CheckCircle,
@@ -18,38 +17,41 @@ import {
   Coffee,
   Wine,
   Cake,
-  Pizza,
-  Salad,
   Beef,
-  Fish,
-  Egg,
   Leaf,
   LayoutGrid,
   Eye,
   EyeOff,
-  RefreshCw,
-  Filter
+  Filter,
 } from 'lucide-react'
-import { Container, Card, Button, Badge, Input, Spinner, showToast, ConfirmModal } from '@/components/ui'
+import {
+  Container,
+  Card,
+  Button,
+  showToast,
+  ConfirmModal,
+  Spinner,
+} from '@/components/ui'
 import { produtosApi } from '@/api/produtos'
 import type { Produto } from '@/types/produto.types'
+import { resolveImageUrl } from '@/utils/imagem'
 
 // ============================================================
 // CONFIGURAÇÕES DE CATEGORIA
 // ============================================================
 const categoryIcons: Record<string, React.ReactNode> = {
-  'principal': <Beef className="w-3.5 h-3.5" />,
-  'entrada': <Utensils className="w-3.5 h-3.5" />,
-  'sobremesa': <Cake className="w-3.5 h-3.5" />,
-  'bebida': <Coffee className="w-3.5 h-3.5" />,
-  'refrigerante': <Coffee className="w-3.5 h-3.5" />,
-  'sucos': <Leaf className="w-3.5 h-3.5" />,
-  'cerveja': <Wine className="w-3.5 h-3.5" />,
-  'cafe': <Coffee className="w-3.5 h-3.5" />,
-  'petisco': <Utensils className="w-3.5 h-3.5" />,
-  'porcoes': <Utensils className="w-3.5 h-3.5" />,
-  'doces': <Cake className="w-3.5 h-3.5" />,
-  'salgados': <Utensils className="w-3.5 h-3.5" />,
+  principal: <Beef className="w-3.5 h-3.5" />,
+  entrada: <Utensils className="w-3.5 h-3.5" />,
+  sobremesa: <Cake className="w-3.5 h-3.5" />,
+  bebida: <Coffee className="w-3.5 h-3.5" />,
+  refrigerante: <Coffee className="w-3.5 h-3.5" />,
+  sucos: <Leaf className="w-3.5 h-3.5" />,
+  cerveja: <Wine className="w-3.5 h-3.5" />,
+  cafe: <Coffee className="w-3.5 h-3.5" />,
+  petisco: <Utensils className="w-3.5 h-3.5" />,
+  porcoes: <Utensils className="w-3.5 h-3.5" />,
+  doces: <Cake className="w-3.5 h-3.5" />,
+  salgados: <Utensils className="w-3.5 h-3.5" />,
 }
 
 // ============================================================
@@ -57,74 +59,61 @@ const categoryIcons: Record<string, React.ReactNode> = {
 // ============================================================
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.7,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
+    transition: { duration: 0.7, ease: [0.25, 0.1, 0.15, 1] },
+  },
 }
 
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1
-    }
-  }
+    transition: { staggerChildren: 0.05, delayChildren: 0.1 },
+  },
 }
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.97 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
+  visible: {
+    opacity: 1,
+    y: 0,
     scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
+    transition: { duration: 0.4, ease: [0.25, 0.1, 0.15, 1] },
   },
   hover: {
     y: -2,
-    transition: {
-      type: "spring",
-      stiffness: 400,
-      damping: 25
-    }
-  }
+    transition: { type: 'spring', stiffness: 400, damping: 25 },
+  },
 }
 
 const emptyVariants = {
   hidden: { opacity: 0, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 400,
       damping: 25,
-      delay: 0.2
-    }
-  }
+      delay: 0.2,
+    },
+  },
 }
 
 const badgeVariants = {
   initial: { scale: 0.8, opacity: 0 },
-  animate: { 
-    scale: 1, 
+  animate: {
+    scale: 1,
     opacity: 1,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 500,
       damping: 30,
-      delay: 0.1
-    }
-  }
+      delay: 0.1,
+    },
+  },
 }
 
 export function AdminProdutos() {
@@ -133,7 +122,11 @@ export function AdminProdutos() {
   const [isMounted, setIsMounted] = useState(false)
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('')
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; publicId: string; name: string }>({
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    publicId: string
+    name: string
+  }>({
     isOpen: false,
     publicId: '',
     name: '',
@@ -181,8 +174,8 @@ export function AdminProdutos() {
         produto.public_id,
         !produto.is_available
       )
-      setProdutos(prev =>
-        prev.map(p => p.public_id === updated.public_id ? updated : p)
+      setProdutos((prev) =>
+        prev.map((p) => (p.public_id === updated.public_id ? updated : p))
       )
       showToast.success(
         <div className="flex items-center gap-2">
@@ -191,7 +184,10 @@ export function AdminProdutos() {
           ) : (
             <XCircle className="w-4 h-4 text-red-500" />
           )}
-          <span>"{updated.name}" {updated.is_available ? 'disponível' : 'indisponível'}</span>
+          <span>
+            "{updated.name}"{' '}
+            {updated.is_available ? 'disponível' : 'indisponível'}
+          </span>
         </div>
       )
     } catch (error) {
@@ -204,13 +200,14 @@ export function AdminProdutos() {
     return categoryIcons[category] || <LayoutGrid className="w-3.5 h-3.5" />
   }
 
-  const filtered = produtos.filter(p => {
+  const filtered = produtos.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = filterCategory === '' || p.category === filterCategory
+    const matchesCategory =
+      filterCategory === '' || p.category === filterCategory
     return matchesSearch && matchesCategory
   })
 
-  const categories = [...new Set(produtos.map(p => p.category))]
+  const categories = [...new Set(produtos.map((p) => p.category))]
 
   // ============================================================
   // LOADING
@@ -235,25 +232,17 @@ export function AdminProdutos() {
         <motion.div
           variants={emptyVariants}
           initial="hidden"
-          animate={isMounted ? "visible" : "hidden"}
+          animate={isMounted ? 'visible' : 'hidden'}
           className="max-w-md mx-auto"
         >
           <Card className="text-center py-16 px-6 bg-gradient-to-br from-cream-50 to-gold-50/30 border-2 border-gold-200/30">
             <motion.div
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, -5, 5, 0]
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
+              animate={{ y: [0, -10, 0], rotate: [0, -5, 5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               className="text-7xl mb-6"
             >
               🍽️
             </motion.div>
-            
             <h2 className="text-3xl font-display text-brown-800 mb-3">
               Nenhum <span className="text-gold-500">produto</span> cadastrado
             </h2>
@@ -280,13 +269,10 @@ export function AdminProdutos() {
   return (
     <div className="min-h-screen bg-cream-50 py-8 md:py-12">
       <Container>
-        
-        {/* ============================================================ */}
         {/* HEADER */}
-        {/* ============================================================ */}
         <motion.div
           initial="hidden"
-          animate={isMounted ? "visible" : "hidden"}
+          animate={isMounted ? 'visible' : 'hidden'}
           variants={fadeUp}
           className="mb-8"
         >
@@ -301,7 +287,9 @@ export function AdminProdutos() {
                     Gerenciar <span className="text-gold-500">Produtos</span>
                   </h1>
                   <p className="text-brown-500 text-sm">
-                    {produtos.length} {produtos.length === 1 ? 'produto' : 'produtos'} no cardápio
+                    {produtos.length}{' '}
+                    {produtos.length === 1 ? 'produto' : 'produtos'} no
+                    cardápio
                   </p>
                 </div>
               </div>
@@ -317,17 +305,15 @@ export function AdminProdutos() {
           </div>
         </motion.div>
 
-        {/* ============================================================ */}
         {/* FILTROS E BUSCA */}
-        {/* ============================================================ */}
         <motion.div
           initial="hidden"
-          animate={isMounted ? "visible" : "hidden"}
+          animate={isMounted ? 'visible' : 'hidden'}
           variants={fadeUp}
           className="flex flex-col sm:flex-row gap-4 mb-6"
         >
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brown-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-400" />
             <input
               type="text"
               placeholder="Buscar produto por nome..."
@@ -354,13 +340,11 @@ export function AdminProdutos() {
           </div>
         </motion.div>
 
-        {/* ============================================================ */}
         {/* LISTA */}
-        {/* ============================================================ */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
-          animate={isMounted ? "visible" : "hidden"}
+          animate={isMounted ? 'visible' : 'hidden'}
           className="space-y-3"
         >
           <AnimatePresence mode="popLayout">
@@ -372,8 +356,8 @@ export function AdminProdutos() {
               >
                 <Package className="w-12 h-12 mx-auto text-brown-300 mb-3" />
                 <p>
-                  {search || filterCategory 
-                    ? 'Nenhum produto encontrado com os filtros aplicados' 
+                  {search || filterCategory
+                    ? 'Nenhum produto encontrado com os filtros aplicados'
                     : 'Nenhum produto cadastrado'}
                 </p>
               </motion.div>
@@ -381,6 +365,7 @@ export function AdminProdutos() {
               filtered.map((produto) => {
                 const isAvailable = produto.is_available !== false
                 const categoryIcon = getCategoryIcon(produto.category)
+                const thumb = resolveImageUrl(produto.image_url)
 
                 return (
                   <motion.div
@@ -389,74 +374,109 @@ export function AdminProdutos() {
                     whileHover="hover"
                     layout
                   >
-                    <Card 
-                      variant="bordered" 
-                      className={`flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-4 md:p-5 bg-white shadow-sm shadow-brown-900/5 border ${isAvailable ? 'border-cream-200/50 hover:border-gold-400/30' : 'border-red-200/50 bg-red-50/10'} transition-all duration-300`}
+                    <Card
+                      variant="bordered"
+                      className={`flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-4 md:p-5 bg-white shadow-sm shadow-brown-900/5 border ${
+                        isAvailable
+                          ? 'border-cream-200/50 hover:border-gold-400/30'
+                          : 'border-red-200/50 bg-red-50/10'
+                      } transition-all duration-300`}
                     >
-                      {/* Informações do produto */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-display text-lg text-brown-800">
-                            {produto.name}
-                          </h3>
-                          {produto.destaque && (
-                            <span className="px-2 py-0.5 bg-gold-500 text-white text-[10px] font-bold rounded-full flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" />
-                              Destaque
-                            </span>
+                      {/* Thumbnail + Informações */}
+                      <div className="flex items-start gap-4 flex-1 min-w-0 w-full">
+                        {/* Thumbnail */}
+                        <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-gold-100 to-brown-100 border border-cream-200/50">
+                          {thumb ? (
+                            <img
+                              src={thumb}
+                              alt={produto.name}
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                ;(
+                                  e.currentTarget as HTMLImageElement
+                                ).style.display = 'none'
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-2xl">
+                              {produto.category === 'bebida' ||
+                              produto.category === 'refrigerante' ||
+                              produto.category === 'sucos' ||
+                              produto.category === 'cerveja' ||
+                              produto.category === 'cafe'
+                                ? '🥤'
+                                : produto.category === 'sobremesa' ||
+                                  produto.category === 'doces'
+                                ? '🍰'
+                                : '🍽️'}
+                            </div>
                           )}
                         </div>
-                        
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="flex items-center gap-1 text-sm font-medium text-gold-600">
-                            <DollarSign className="w-3.5 h-3.5" />
-                            {produto.price.toLocaleString('pt-AO')} Kz
-                          </span>
-                          
-                          <motion.span
-                            variants={badgeVariants}
-                            initial="initial"
-                            animate="animate"
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              isAvailable
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-red-50 text-red-700 border border-red-200'
-                            }`}
-                          >
-                            {isAvailable ? (
-                              <CheckCircle className="w-3 h-3" />
-                            ) : (
-                              <XCircle className="w-3 h-3" />
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-display text-lg text-brown-800 truncate">
+                              {produto.name}
+                            </h3>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <span className="flex items-center gap-1 text-sm font-medium text-gold-600">
+                              <DollarSign className="w-3.5 h-3.5" />
+                              {produto.price.toLocaleString('pt-AO')} Kz
+                            </span>
+
+                            <motion.span
+                              variants={badgeVariants}
+                              initial="initial"
+                              animate="animate"
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                isAvailable
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-red-50 text-red-700 border border-red-200'
+                              }`}
+                            >
+                              {isAvailable ? (
+                                <CheckCircle className="w-3 h-3" />
+                              ) : (
+                                <XCircle className="w-3 h-3" />
+                              )}
+                              {isAvailable ? 'Disponível' : 'Indisponível'}
+                            </motion.span>
+
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                              {categoryIcon}
+                              {produto.category}
+                            </span>
+
+                            {produto.subcategory && (
+                              <span className="text-xs text-brown-400">
+                                {produto.subcategory}
+                              </span>
                             )}
-                            {isAvailable ? 'Disponível' : 'Indisponível'}
-                          </motion.span>
+                          </div>
 
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                            {categoryIcon}
-                            {produto.category}
-                          </span>
-
-                          {produto.subcategory && (
-                            <span className="text-xs text-brown-400">
-                              {produto.subcategory}
-                            </span>
+                          {produto.description && (
+                            <p className="text-sm text-brown-500 mt-1 line-clamp-1">
+                              {produto.description}
+                            </p>
                           )}
                         </div>
-
-                        {produto.description && (
-                          <p className="text-sm text-brown-500 mt-1 line-clamp-1">
-                            {produto.description}
-                          </p>
-                        )}
                       </div>
 
                       {/* Ações */}
                       <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                         <Button
-                          variant={isAvailable ? 'outline' : 'outline'}
+                          variant="outline"
                           size="sm"
                           onClick={() => handleToggleDisponibilidade(produto)}
-                          className={isAvailable ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50' : 'border-red-300 text-red-600 hover:bg-red-50'}
+                          className={
+                            isAvailable
+                              ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50'
+                              : 'border-red-300 text-red-600 hover:bg-red-50'
+                          }
                         >
                           <span className="flex items-center gap-1.5">
                             {isAvailable ? (
@@ -473,8 +493,14 @@ export function AdminProdutos() {
                           </span>
                         </Button>
 
-                        <Link to={`/admin/produtos/editar/${produto.public_id}`}>
-                          <Button variant="outline" size="sm" className="border-gold-300 text-brown-600 hover:bg-gold-50/50">
+                        <Link
+                          to={`/admin/produtos/editar/${produto.public_id}`}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gold-300 text-brown-600 hover:bg-gold-50/50"
+                          >
                             <span className="flex items-center gap-1.5">
                               <Edit className="w-3.5 h-3.5" />
                               Editar
@@ -485,11 +511,13 @@ export function AdminProdutos() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => setDeleteModal({
-                            isOpen: true,
-                            publicId: produto.public_id,
-                            name: produto.name,
-                          })}
+                          onClick={() =>
+                            setDeleteModal({
+                              isOpen: true,
+                              publicId: produto.public_id,
+                              name: produto.name,
+                            })
+                          }
                         >
                           <span className="flex items-center gap-1.5">
                             <Trash2 className="w-3.5 h-3.5" />
@@ -505,9 +533,7 @@ export function AdminProdutos() {
           </AnimatePresence>
         </motion.div>
 
-        {/* ============================================================ */}
-        {/* FOOTER DA LISTA */}
-        {/* ============================================================ */}
+        {/* FOOTER */}
         {filtered.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -518,12 +544,12 @@ export function AdminProdutos() {
           </motion.div>
         )}
 
-        {/* ============================================================ */}
         {/* DELETE MODAL */}
-        {/* ============================================================ */}
         <ConfirmModal
           isOpen={deleteModal.isOpen}
-          onClose={() => setDeleteModal({ isOpen: false, publicId: '', name: '' })}
+          onClose={() =>
+            setDeleteModal({ isOpen: false, publicId: '', name: '' })
+          }
           onConfirm={handleDeleteConfirm}
           title="Confirmar Exclusão"
           message={`Tem certeza que deseja excluir "${deleteModal.name}"? Esta ação não pode ser desfeita.`}

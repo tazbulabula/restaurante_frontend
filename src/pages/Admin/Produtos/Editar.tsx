@@ -1,12 +1,11 @@
 // src/pages/Admin/Produtos/Editar.tsx
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  Package, 
-  Tag, 
-  DollarSign, 
+import {
+  Tag,
+  DollarSign,
   LayoutGrid,
   List,
   Sparkles,
@@ -18,21 +17,29 @@ import {
   Coffee,
   Wine,
   Cake,
-  Pizza,
-  Salad,
   Beef,
-  Fish,
-  Egg,
   Leaf,
   Loader2,
-  Edit
+  Edit,
+  Image as ImageIcon,
+  Upload,
+  X,
 } from 'lucide-react'
-import { Container, Card, CardHeader, CardTitle, CardContent, CardFooter, Button, Input, Spinner, showToast } from '@/components/ui'
+import {
+  Container,
+  Card,
+  CardContent,
+  CardFooter,
+  Button,
+  Spinner,
+  showToast,
+} from '@/components/ui'
 import { produtosApi } from '@/api/produtos'
 import type { Produto } from '@/types/produto.types'
+import { resolveImageUrl } from '@/utils/imagem'
 
 // ============================================================
-// CONFIGURAÇÕES DE CATEGORIA
+// CONFIGURAÇÕES
 // ============================================================
 const categorias = [
   { value: 'principal', label: 'Principal', icon: <Beef className="w-4 h-4" /> },
@@ -49,31 +56,28 @@ const categorias = [
   { value: 'salgados', label: 'Salgados', icon: <Utensils className="w-4 h-4" /> },
 ]
 
+const EXTENSOES_PERMITIDAS = ['jpg', 'jpeg', 'png', 'webp']
+const TAMANHO_MAX_MB = 5
+
 // ============================================================
 // ANIMAÇÕES
 // ============================================================
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.7,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
+    transition: { duration: 0.7, ease: [0.25, 0.1, 0.15, 1] },
+  },
 }
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.92 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.15, 1] },
+  },
 }
 
 const inputVariants = {
@@ -81,24 +85,17 @@ const inputVariants = {
   visible: (i: number) => ({
     opacity: 1,
     x: 0,
-    transition: {
-      delay: i * 0.06 + 0.2,
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  })
+    transition: { delay: i * 0.06 + 0.2, duration: 0.4, ease: [0.25, 0.1, 0.15, 1] },
+  }),
 }
 
 const loadingVariants = {
   hidden: { opacity: 0, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
+    transition: { duration: 0.4, ease: [0.25, 0.1, 0.15, 1] },
+  },
 }
 
 export function AdminProdutosEditar() {
@@ -123,12 +120,23 @@ export function AdminProdutosEditar() {
     is_available: true,
   })
 
+  // 🔽 imagem
+  const [novaImagem, setNovaImagem] = useState<File | null>(null)
+  const [previewNova, setPreviewNova] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     setIsMounted(true)
     if (publicId) {
       carregarProduto(publicId)
     }
   }, [publicId])
+
+  useEffect(() => {
+    return () => {
+      if (previewNova) URL.revokeObjectURL(previewNova)
+    }
+  }, [previewNova])
 
   const carregarProduto = async (id: string) => {
     setIsLoading(true)
@@ -147,25 +155,76 @@ export function AdminProdutosEditar() {
   // ============================================================
   // VALIDAÇÕES
   // ============================================================
-  const isNameValid = form.name?.length >= 2
-  const isPriceValid = form.price !== undefined && form.price > 0
-  const isDescriptionValid = form.description?.length === 0 || form.description?.length >= 10
-  const isSubcategoryValid = form.subcategory?.length === 0 || form.subcategory?.length >= 2
+  const isNameValid = (form.name?.length ?? 0) >= 2
+  const isPriceValid = form.price !== undefined && Number(form.price) > 0
+  const isDescriptionValid =
+    (form.description?.length ?? 0) === 0 ||
+    (form.description?.length ?? 0) >= 10
+  const isSubcategoryValid =
+    (form.subcategory?.length ?? 0) === 0 ||
+    (form.subcategory?.length ?? 0) >= 2
 
-  const isFormValid = isNameValid && isPriceValid && isDescriptionValid && isSubcategoryValid
+  const isFormValid =
+    isNameValid && isPriceValid && isDescriptionValid && isSubcategoryValid
 
   const handleBlur = (field: keyof typeof touched) => {
-    setTouched(prev => ({ ...prev, [field]: true }))
+    setTouched((prev) => ({ ...prev, [field]: true }))
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]:
+        type === 'checkbox'
+          ? (e.target as HTMLInputElement).checked
+          : type === 'number'
+          ? value === ''
+            ? undefined
+            : Number(value)
+          : value,
     }))
   }
 
+  // ============================================================
+  // IMAGEM
+  // ============================================================
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    if (!ext || !EXTENSOES_PERMITIDAS.includes(ext)) {
+      showToast.error(
+        `Formato inválido. Use: ${EXTENSOES_PERMITIDAS.join(', ').toUpperCase()}`
+      )
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > TAMANHO_MAX_MB * 1024 * 1024) {
+      showToast.error(`Imagem demasiado grande (máx ${TAMANHO_MAX_MB} MB).`)
+      e.target.value = ''
+      return
+    }
+
+    if (previewNova) URL.revokeObjectURL(previewNova)
+    setNovaImagem(file)
+    setPreviewNova(URL.createObjectURL(file))
+  }
+
+  const handleRemoverNovaImagem = () => {
+    if (previewNova) URL.revokeObjectURL(previewNova)
+    setNovaImagem(null)
+    setPreviewNova(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!publicId) return
@@ -177,7 +236,21 @@ export function AdminProdutosEditar() {
 
     setIsSaving(true)
     try {
-      await produtosApi.atualizar(publicId, form)
+      // 1. Atualiza os dados em JSON
+      await produtosApi.atualizar(publicId, {
+        name: form.name,
+        description: form.description,
+        price: form.price,
+        category: form.category,
+        subcategory: form.subcategory,
+        is_available: form.is_available,
+      })
+
+      // 2. Se houver nova imagem, faz upload separado
+      if (novaImagem) {
+        await produtosApi.atualizarImagem(publicId, novaImagem)
+      }
+
       showToast.success(
         <div className="flex items-center gap-2">
           <CheckCircle className="w-4 h-4" />
@@ -187,14 +260,14 @@ export function AdminProdutosEditar() {
       navigate('/admin/produtos')
     } catch (error: any) {
       console.error('Erro ao atualizar produto:', error)
-      showToast.error(error.response?.data?.detail || 'Erro ao atualizar produto')
+      showToast.error(error.userMessage || error.response?.data?.detail || 'Erro ao atualizar produto')
     } finally {
       setIsSaving(false)
     }
   }
 
   const getCategoryIcon = (category: string) => {
-    const found = categorias.find(c => c.value === category)
+    const found = categorias.find((c) => c.value === category)
     return found?.icon || <LayoutGrid className="w-4 h-4" />
   }
 
@@ -219,19 +292,19 @@ export function AdminProdutosEditar() {
     )
   }
 
+  const imagemAtualUrl = resolveImageUrl(form.image_url)
+  const mostrarImagemAtual = imagemAtualUrl && !previewNova
+
   // ============================================================
   // FORMULÁRIO
   // ============================================================
   return (
     <div className="min-h-screen bg-cream-50 py-8 md:py-12">
       <Container>
-        
-        {/* ============================================================ */}
         {/* HEADER */}
-        {/* ============================================================ */}
         <motion.div
           initial="hidden"
-          animate={isMounted ? "visible" : "hidden"}
+          animate={isMounted ? 'visible' : 'hidden'}
           variants={fadeUp}
           className="mb-8"
         >
@@ -261,36 +334,34 @@ export function AdminProdutosEditar() {
           </div>
         </motion.div>
 
-        {/* ============================================================ */}
         {/* CARD */}
-        {/* ============================================================ */}
         <motion.div
           initial="hidden"
-          animate={isMounted ? "visible" : "hidden"}
+          animate={isMounted ? 'visible' : 'hidden'}
           variants={scaleIn}
           className="max-w-2xl mx-auto"
         >
-          <Card variant="gold" className="shadow-2xl shadow-gold-500/10 border-2 border-gold-200/30 backdrop-blur-sm bg-white/95 overflow-hidden">
+          <Card
+            variant="gold"
+            className="shadow-2xl shadow-gold-500/10 border-2 border-gold-200/30 backdrop-blur-sm bg-white/95 overflow-hidden"
+          >
             <div className="h-1.5 w-full bg-gradient-to-r from-gold-300 via-gold-500 to-gold-300" />
 
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-5 pt-6">
-                
-                {/* ============================================================ */}
                 {/* NOME */}
-                {/* ============================================================ */}
                 <motion.div
                   custom={0}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
                 >
                   <label className="block text-sm font-medium text-brown-700 mb-1.5">
                     <Tag className="w-4 h-4 inline mr-2 text-gold-500" />
                     Nome do Produto *
                   </label>
                   <div className="relative">
-                    <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brown-400" />
+                    <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-400" />
                     <input
                       type="text"
                       name="name"
@@ -298,20 +369,15 @@ export function AdminProdutosEditar() {
                       onChange={handleChange}
                       onBlur={() => handleBlur('name')}
                       placeholder="Ex: Filé à Parmegiana"
-                      className={`
-                        w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl 
-                        text-brown-800 placeholder-brown-400
-                        focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white
-                        transition-all duration-300
-                        ${touched.name && !isNameValid && form.name?.length > 0
+                      className={`w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl text-brown-800 placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white transition-all duration-300 ${
+                        touched.name && !isNameValid && (form.name?.length ?? 0) > 0
                           ? 'border-red-400 focus:ring-red-400/50'
                           : 'border-cream-200 hover:border-gold-300'
-                        }
-                      `}
+                      }`}
                       required
                     />
                   </div>
-                  {touched.name && !isNameValid && form.name?.length > 0 && (
+                  {touched.name && !isNameValid && (form.name?.length ?? 0) > 0 && (
                     <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -323,89 +389,79 @@ export function AdminProdutosEditar() {
                   )}
                 </motion.div>
 
-                {/* ============================================================ */}
                 {/* DESCRIÇÃO */}
-                {/* ============================================================ */}
                 <motion.div
                   custom={1}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
                 >
                   <label className="block text-sm font-medium text-brown-700 mb-1.5">
                     <List className="w-4 h-4 inline mr-2 text-gold-500" />
                     Descrição <span className="text-brown-400 text-xs">(opcional)</span>
                   </label>
                   <div className="relative">
-                    <List className="absolute left-3.5 top-3.5 w-4.5 h-4.5 text-brown-400" />
+                    <List className="absolute left-3.5 top-3.5 w-4 h-4 text-brown-400" />
                     <textarea
                       name="description"
                       value={form.description || ''}
                       onChange={handleChange}
                       onBlur={() => handleBlur('description')}
                       rows={3}
-                      className={`
-                        w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl 
-                        text-brown-800 placeholder-brown-400
-                        focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white
-                        transition-all duration-300 resize-none
-                        ${touched.description && !isDescriptionValid && form.description?.length > 0
+                      className={`w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl text-brown-800 placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white transition-all duration-300 resize-none ${
+                        touched.description &&
+                        !isDescriptionValid &&
+                        (form.description?.length ?? 0) > 0
                           ? 'border-red-400 focus:ring-red-400/50'
                           : 'border-cream-200 hover:border-gold-300'
-                        }
-                      `}
+                      }`}
                       placeholder="Descrição detalhada do produto..."
                     />
                   </div>
-                  {touched.description && !isDescriptionValid && form.description?.length > 0 && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-500 mt-1.5 flex items-center gap-1"
-                    >
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      Descrição deve ter pelo menos 10 caracteres
-                    </motion.p>
-                  )}
+                  {touched.description &&
+                    !isDescriptionValid &&
+                    (form.description?.length ?? 0) > 0 && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-sm text-red-500 mt-1.5 flex items-center gap-1"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Descrição deve ter pelo menos 10 caracteres
+                      </motion.p>
+                    )}
                 </motion.div>
 
-                {/* ============================================================ */}
                 {/* PREÇO */}
-                {/* ============================================================ */}
                 <motion.div
                   custom={2}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
                 >
                   <label className="block text-sm font-medium text-brown-700 mb-1.5">
                     <DollarSign className="w-4 h-4 inline mr-2 text-gold-500" />
                     Preço (Kz) *
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brown-400" />
+                    <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-400" />
                     <input
                       type="number"
                       name="price"
-                      value={form.price || ''}
+                      value={form.price ?? ''}
                       onChange={handleChange}
                       onBlur={() => handleBlur('price')}
                       placeholder="0.00"
                       step="0.01"
-                      className={`
-                        w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl 
-                        text-brown-800 placeholder-brown-400
-                        focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white
-                        transition-all duration-300
-                        ${touched.price && !isPriceValid && form.price !== undefined && form.price > 0
+                      className={`w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl text-brown-800 placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white transition-all duration-300 ${
+                        touched.price && !isPriceValid && (form.price ?? 0) > 0
                           ? 'border-red-400 focus:ring-red-400/50'
                           : 'border-cream-200 hover:border-gold-300'
-                        }
-                      `}
+                      }`}
                       required
                     />
                   </div>
-                  {touched.price && !isPriceValid && form.price !== undefined && form.price > 0 && (
+                  {touched.price && !isPriceValid && (form.price ?? 0) > 0 && (
                     <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -417,14 +473,12 @@ export function AdminProdutosEditar() {
                   )}
                 </motion.div>
 
-                {/* ============================================================ */}
                 {/* CATEGORIA */}
-                {/* ============================================================ */}
                 <motion.div
                   custom={3}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
                 >
                   <label className="block text-sm font-medium text-brown-700 mb-1.5">
                     <LayoutGrid className="w-4 h-4 inline mr-2 text-gold-500" />
@@ -447,28 +501,37 @@ export function AdminProdutosEditar() {
                       ))}
                     </select>
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg className="w-4 h-4 text-brown-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <svg
+                        className="w-4 h-4 text-brown-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* ============================================================ */}
                 {/* SUBCATEGORIA */}
-                {/* ============================================================ */}
                 <motion.div
                   custom={4}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
                 >
                   <label className="block text-sm font-medium text-brown-700 mb-1.5">
                     <List className="w-4 h-4 inline mr-2 text-gold-500" />
-                    Subcategoria <span className="text-brown-400 text-xs">(opcional)</span>
+                    Subcategoria{' '}
+                    <span className="text-brown-400 text-xs">(opcional)</span>
                   </label>
                   <div className="relative">
-                    <List className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brown-400" />
+                    <List className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-400" />
                     <input
                       type="text"
                       name="subcategory"
@@ -476,44 +539,111 @@ export function AdminProdutosEditar() {
                       onChange={handleChange}
                       onBlur={() => handleBlur('subcategory')}
                       placeholder="Ex: Carnes, Massas, Frutos do Mar..."
-                      className={`
-                        w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl 
-                        text-brown-800 placeholder-brown-400
-                        focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white
-                        transition-all duration-300
-                        ${touched.subcategory && !isSubcategoryValid && form.subcategory?.length > 0
+                      className={`w-full pl-11 pr-4 py-3 bg-cream-50/50 border rounded-xl text-brown-800 placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-gold-400/50 focus:border-gold-400 focus:bg-white transition-all duration-300 ${
+                        touched.subcategory &&
+                        !isSubcategoryValid &&
+                        (form.subcategory?.length ?? 0) > 0
                           ? 'border-red-400 focus:ring-red-400/50'
                           : 'border-cream-200 hover:border-gold-300'
-                        }
-                      `}
+                      }`}
                     />
                   </div>
-                  {touched.subcategory && !isSubcategoryValid && form.subcategory?.length > 0 && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-500 mt-1.5 flex items-center gap-1"
-                    >
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      Subcategoria deve ter pelo menos 2 caracteres
-                    </motion.p>
-                  )}
+                  {touched.subcategory &&
+                    !isSubcategoryValid &&
+                    (form.subcategory?.length ?? 0) > 0 && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-sm text-red-500 mt-1.5 flex items-center gap-1"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Subcategoria deve ter pelo menos 2 caracteres
+                      </motion.p>
+                    )}
                 </motion.div>
 
-                {/* ============================================================ */}
-                {/* DISPONÍVEL */}
-                {/* ============================================================ */}
+                {/* IMAGEM (NOVO) */}
                 <motion.div
                   custom={5}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
+                >
+                  <label className="block text-sm font-medium text-brown-700 mb-1.5">
+                    <ImageIcon className="w-4 h-4 inline mr-2 text-gold-500" />
+                    Foto do Produto{' '}
+                    <span className="text-brown-400 text-xs">
+                      (opcional · JPG/PNG/WEBP · máx {TAMANHO_MAX_MB} MB)
+                    </span>
+                  </label>
+
+                  {/* Mostra preview da nova OU a atual */}
+                  {previewNova ? (
+                    <div className="relative w-full rounded-xl overflow-hidden border border-cream-200 bg-cream-50">
+                      <img
+                        src={previewNova}
+                        alt="Nova imagem"
+                        className="w-full max-h-72 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoverNovaImagem}
+                        className="absolute top-2 right-2 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
+                        aria-label="Remover nova imagem"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-md">
+                        Nova: {novaImagem?.name}
+                      </div>
+                    </div>
+                  ) : mostrarImagemAtual ? (
+                    <div className="relative w-full rounded-xl overflow-hidden border border-cream-200 bg-cream-50">
+                      <img
+                        src={imagemAtualUrl}
+                        alt={form.name}
+                        className="w-full max-h-72 object-cover"
+                      />
+                      <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-md">
+                        Imagem atual
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Input de upload */}
+                  <label
+                    htmlFor="image-upload"
+                    className="mt-3 flex flex-col items-center justify-center gap-2 w-full py-6 bg-cream-50/50 border-2 border-dashed border-cream-300 rounded-xl cursor-pointer hover:border-gold-400 hover:bg-gold-50/30 transition-all duration-300"
+                  >
+                    <Upload className="w-6 h-6 text-brown-400" />
+                    <span className="text-sm text-brown-600 font-medium">
+                      {previewNova || mostrarImagemAtual
+                        ? 'Substituir imagem'
+                        : 'Clique para escolher uma imagem'}
+                    </span>
+                    <input
+                      id="image-upload"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                </motion.div>
+
+                {/* DISPONÍVEL */}
+                <motion.div
+                  custom={6}
+                  variants={inputVariants}
+                  initial="hidden"
+                  animate={isMounted ? 'visible' : 'hidden'}
                   className="flex items-center gap-3 p-4 bg-cream-50/50 rounded-xl border border-cream-200"
                 >
                   <input
                     type="checkbox"
                     name="is_available"
-                    checked={form.is_available !== undefined ? form.is_available : true}
+                    checked={form.is_available ?? true}
                     onChange={handleChange}
                     className="w-5 h-5 text-gold-500 rounded-lg border-cream-300 focus:ring-gold-400 focus:ring-offset-0 transition-colors"
                   />
@@ -522,21 +652,19 @@ export function AdminProdutosEditar() {
                       Produto Disponível
                     </label>
                     <p className="text-xs text-brown-400">
-                      {form.is_available !== undefined && form.is_available
+                      {form.is_available
                         ? '✅ Produto visível no cardápio'
                         : '⛔ Produto oculto do cardápio'}
                     </p>
                   </div>
                 </motion.div>
 
-                {/* ============================================================ */}
                 {/* DICA */}
-                {/* ============================================================ */}
                 <motion.div
-                  custom={6}
+                  custom={7}
                   variants={inputVariants}
                   initial="hidden"
-                  animate={isMounted ? "visible" : "hidden"}
+                  animate={isMounted ? 'visible' : 'hidden'}
                   className="p-4 bg-blue-50/50 rounded-xl border border-blue-200/50"
                 >
                   <div className="flex items-start gap-3">
@@ -548,7 +676,7 @@ export function AdminProdutosEditar() {
                         Atualizando produto
                       </p>
                       <p className="text-xs text-blue-600">
-                        As alterações serão aplicadas imediatamente no cardápio do restaurante.
+                        As alterações serão aplicadas imediatamente no cardápio.
                       </p>
                     </div>
                   </div>

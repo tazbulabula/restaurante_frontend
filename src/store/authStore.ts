@@ -28,18 +28,12 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true,
 
       login: async (email: string, password: string) => {
-        set({ isLoading: true })  // ✅ Começa loading
-        try {
-          const response = await authApi.login(email, password)
-          set({ token: response.access_token, isAuthenticated: true })
+        const response = await authApi.login(email, password)
+        set({ token: response.access_token, isAuthenticated: true })
 
-          const user = await authApi.getCurrentUser()
-          set({ user, isLoading: false })  // ✅ Termina loading
-          return user
-        } catch (error) {
-          set({ isLoading: false })  // ✅ Termina loading em erro
-          throw error
-        }
+        const user = await authApi.getCurrentUser()
+        set({ user })
+        return user
       },
 
       register: async (data) => {

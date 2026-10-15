@@ -18,5 +18,13 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
-  
+  server: {
+    proxy: {
+      // só para dev — em produção o VITE_API_URL já é absoluto
+      '/static': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

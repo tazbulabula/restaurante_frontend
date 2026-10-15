@@ -2,6 +2,8 @@
 
 import { Link } from 'react-router-dom'
 import { Button, Container, Card } from '@/components/ui'
+import { FoodPhotoShowcase } from '@/components/common/FoodPhotoShowcase'
+import { beverageShowcasePhotos, foodShowcasePhotos } from '@/data/foodShowcasePhotos'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { useRef, useEffect, useState } from 'react'
 import { 
@@ -487,6 +489,16 @@ export function Home() {
           </motion.div>
         </Container>
       </section>
+
+      <FoodPhotoShowcase
+        photos={foodShowcasePhotos}
+        beverages={beverageShowcasePhotos}
+        eyebrow="Sabores angolanos e bebidas da casa"
+        title="Angola à mesa. Frescor no copo."
+        description="Do mufete ao calulu com funge, com pratos da casa, cervejas e sumos para acompanhar."
+        actionLabel="Explorar o cardápio"
+        actionHref="/cardapio"
+      />
 
       {/* ============================================================ */}
       {/* DEPOIMENTOS - COM ANIMAÇÃO SOB DEMANDA */}

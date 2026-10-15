@@ -22,7 +22,11 @@ import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { showToast } from '@/components/ui'
 import { CardapioSkeleton } from '@/components/Skeletons/CardapioSkeleton'
+import { FoodPhotoShowcase } from '@/components/common/FoodPhotoShowcase'
+import { beverageShowcasePhotos, foodShowcasePhotos } from '@/data/foodShowcasePhotos'
 import type { Produto } from '@/types/produto.types'
+
+import { resolveImageUrl } from '@/utils/imagem'
 
 // ============================================================
 // ANIMAÇÕES
@@ -234,6 +238,17 @@ export function Cardapio() {
         </Container>
       </motion.div>
 
+      <FoodPhotoShowcase
+        photos={foodShowcasePhotos}
+        beverages={beverageShowcasePhotos}
+        eyebrow="Pratos e bebidas da casa"
+        title="Escolha o que vai à mesa."
+        description="Descubra pratos da culinária angolana e bebidas para acompanhar."
+        actionLabel="Ver todos os pratos"
+        actionHref="#menu-itens"
+        tone="light"
+      />
+
       {/* ============================================================ */}
       {/* FILTROS E BUSCA */}
       {/* ============================================================ */}
@@ -299,7 +314,7 @@ export function Cardapio() {
       {/* ============================================================ */}
       {/* LISTA DE PRODUTOS */}
       {/* ============================================================ */}
-      <Container className="py-8 md:py-12">
+      <Container id="menu-itens" className="scroll-mt-32 py-8 md:py-12">
         <AnimatePresence mode="wait">
           {filtered.length === 0 ? (
             <motion.div
@@ -334,22 +349,39 @@ export function Cardapio() {
                 >
                   <div className="bg-white rounded-2xl overflow-hidden shadow-lg shadow-brown-900/5 border border-cream-200/50 hover:border-gold-400/30 hover:shadow-xl hover:shadow-gold-500/10 transition-all duration-500 h-full flex flex-col">
                     
-                    {/* Imagem (placeholder) */}
-                    <div className="relative h-48 bg-gradient-to-br from-gold-100 to-brown-100 flex items-center justify-center overflow-hidden">
-                      <span className="text-6xl opacity-50 group-hover:opacity-100 transition-opacity duration-500">
-                        {produto.category === 'Entradas' ? '🥗' :
-                         produto.category === 'Pratos Principais' ? '🍖' :
-                         produto.category === 'Massas' ? '🍝' :
-                         produto.category === 'Sobremesas' ? '🍰' :
-                         produto.category === 'Bebidas' ? '🍷' : '🍽️'}
-                      </span>
-                      {/* Badge de categoria na imagem */}
-                      <span className="absolute top-3 left-3 px-3 py-1 bg-brown-900/80 backdrop-blur-sm text-cream-50 text-xs font-medium rounded-full">
+                    {/* Imagem */}
+                    <div className="relative h-48 bg-gradient-to-br from-gold-100 to-brown-100 overflow-hidden">
+                      {produto.image_url ? (
+                        <img
+                          src={resolveImageUrl(produto.image_url)}
+                          alt={produto.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            // fallback para emoji se a imagem falhar
+                            ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                          }}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-6xl opacity-50 group-hover:opacity-100 transition-opacity duration-500">
+                            {produto.category === 'Entradas' ? '🥗' :
+                            produto.category === 'Pratos Principais' ? '🍖' :
+                            produto.category === 'Massas' ? '🍝' :
+                            produto.category === 'Sobremesas' ? '🍰' :
+                            produto.category === 'Bebidas' ? '🍷' : '🍽️'}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Badge de categoria */}
+                      <span className="absolute top-3 left-3 px-3 py-1 bg-brown-900/80 backdrop-blur-sm text-cream-50 text-xs font-medium rounded-full z-10">
                         {produto.category}
                       </span>
-                      {/* Badge de destaque (se disponível) */}
+
+                      {/* Badge de destaque */}
                       {produto.destaque && (
-                        <span className="absolute top-3 right-3 px-3 py-1 bg-gold-500 text-brown-900 text-xs font-bold rounded-full flex items-center gap-1">
+                        <span className="absolute top-3 right-3 px-3 py-1 bg-gold-500 text-brown-900 text-xs font-bold rounded-full flex items-center gap-1 z-10">
                           <Sparkles className="w-3 h-3" />
                           Destaque
                         </span>

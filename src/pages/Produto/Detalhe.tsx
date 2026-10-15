@@ -2,17 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  ArrowLeft, 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
+import { motion } from 'framer-motion'
+import {
+  ArrowLeft,
+  Plus,
+  Minus,
+  ShoppingCart,
   Sparkles,
   ChefHat,
-  Clock,
-  Star,
-  Info,
   CheckCircle,
   XCircle,
   Utensils,
@@ -23,121 +20,99 @@ import {
   Salad,
   Beef,
   Fish,
-  Egg,
   Leaf,
   Heart,
-  Share2
 } from 'lucide-react'
-import { Container, Card, Button, Badge, Spinner, showToast } from '@/components/ui'
+import { Container, Button, showToast } from '@/components/ui'
 import { produtosApi } from '@/api/produtos'
 import { useCartStore } from '@/store/cartStore'
 import type { Produto } from '@/types/produto.types'
+import { resolveImageUrl } from '@/utils/imagem'
 
 // ============================================================
 // ÍCONES POR CATEGORIA
 // ============================================================
 const categoryIcons: Record<string, React.ReactNode> = {
-  'Entradas': <Utensils className="w-5 h-5" />,
+  Entradas: <Utensils className="w-5 h-5" />,
   'Pratos Principais': <Beef className="w-5 h-5" />,
-  'Massas': <Pizza className="w-5 h-5" />,
-  'Sobremesas': <Cake className="w-5 h-5" />,
-  'Bebidas': <Coffee className="w-5 h-5" />,
-  'Saladas': <Salad className="w-5 h-5" />,
-  'Peixes': <Fish className="w-5 h-5" />,
-  'Vegano': <Leaf className="w-5 h-5" />,
-  'Vinhos': <Wine className="w-5 h-5" />,
+  Massas: <Pizza className="w-5 h-5" />,
+  Sobremesas: <Cake className="w-5 h-5" />,
+  Bebidas: <Coffee className="w-5 h-5" />,
+  Saladas: <Salad className="w-5 h-5" />,
+  Peixes: <Fish className="w-5 h-5" />,
+  Vegano: <Leaf className="w-5 h-5" />,
+  Vinhos: <Wine className="w-5 h-5" />,
 }
 
 // ============================================================
 // ANIMAÇÕES
 // ============================================================
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: {
-      duration: 0.7,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
-}
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: { 
-    opacity: 1, 
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
-}
-
 const floatAnimation = {
   y: [0, -8, 0],
   transition: {
     duration: 3,
     repeat: Infinity,
-    ease: "easeInOut"
-  }
+    ease: 'easeInOut',
+  },
 }
 
 const imageVariants = {
   hidden: { opacity: 0, scale: 0.95 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     transition: {
       duration: 0.6,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
+      ease: [0.25, 0.1, 0.15, 1],
+    },
+  },
 }
 
 const contentVariants = {
   hidden: { opacity: 0, x: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     x: 0,
     transition: {
       duration: 0.6,
       delay: 0.1,
-      ease: [0.25, 0.1, 0.15, 1]
-    }
-  }
+      ease: [0.25, 0.1, 0.15, 1],
+    },
+  },
 }
 
 const quantityVariants = {
   hover: {
     scale: 1.05,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 400,
-      damping: 25
-    }
+      damping: 25,
+    },
   },
   tap: {
     scale: 0.95,
-    transition: { duration: 0.1 }
-  }
+    transition: { duration: 0.1 },
+  },
 }
 
 const badgeVariants = {
   initial: { scale: 0.8, opacity: 0 },
-  animate: { 
-    scale: 1, 
+  animate: {
+    scale: 1,
     opacity: 1,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 500,
       damping: 30,
-      delay: 0.2
-    }
-  }
+      delay: 0.2,
+    },
+  },
 }
 
+// ============================================================
+// COMPONENTE
+// ============================================================
 export function DetalheProduto() {
   const { publicId } = useParams<{ publicId: string }>()
   const navigate = useNavigate()
@@ -146,7 +121,8 @@ export function DetalheProduto() {
   const [quantidade, setQuantidade] = useState(1)
   const [isMounted, setIsMounted] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
-  
+  const [imageError, setImageError] = useState(false)
+
   const { addItem } = useCartStore()
   const imageRef = useRef<HTMLDivElement>(null)
 
@@ -173,22 +149,24 @@ export function DetalheProduto() {
 
   const handleAddToCart = () => {
     if (!produto) return
-    
+
     addItem(
       { id: produto.id, name: produto.name, price: produto.price },
       quantidade
     )
-    
+
     showToast.success(
       <div className="flex items-center gap-2">
         <ShoppingCart className="w-4 h-4" />
-        <span>{quantidade}x {produto.name} adicionado ao carrinho! 🎉</span>
+        <span>
+          {quantidade}x {produto.name} adicionado ao carrinho! 🎉
+        </span>
       </div>
     )
   }
 
   const handleQuantityChange = (delta: number) => {
-    setQuantidade(prev => Math.max(1, prev + delta))
+    setQuantidade((prev) => Math.max(1, prev + delta))
   }
 
   const getCategoryIcon = (category: string) => {
@@ -207,7 +185,9 @@ export function DetalheProduto() {
             <ChefHat className="w-6 h-6 text-gold-400" />
           </div>
         </div>
-        <p className="text-brown-500 mt-4">Carregando detalhes do prato...</p>
+        <p className="text-brown-500 mt-4">
+          Carregando detalhes do prato...
+        </p>
       </Container>
     )
   }
@@ -249,7 +229,6 @@ export function DetalheProduto() {
   return (
     <div className="min-h-screen bg-cream-50 py-8 md:py-12">
       <Container>
-        
         {/* ============================================================ */}
         {/* BOTÃO VOLTAR */}
         {/* ============================================================ */}
@@ -259,7 +238,10 @@ export function DetalheProduto() {
           transition={{ duration: 0.4 }}
           className="mb-6"
         >
-          <Link to="/cardapio" className="inline-flex items-center gap-2 text-brown-500 hover:text-gold-600 transition-colors duration-300 group">
+          <Link
+            to="/cardapio"
+            className="inline-flex items-center gap-2 text-brown-500 hover:text-gold-600 transition-colors duration-300 group"
+          >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span>Voltar ao Cardápio</span>
           </Link>
@@ -269,7 +251,6 @@ export function DetalheProduto() {
         {/* GRID PRINCIPAL */}
         {/* ============================================================ */}
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12">
-          
           {/* ============================================================ */}
           {/* IMAGEM */}
           {/* ============================================================ */}
@@ -277,20 +258,32 @@ export function DetalheProduto() {
             ref={imageRef}
             variants={imageVariants}
             initial="hidden"
-            animate={isMounted ? "visible" : "hidden"}
+            animate={isMounted ? 'visible' : 'hidden'}
             className="relative"
           >
             <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gold-100 to-brown-100 shadow-2xl shadow-brown-900/10 aspect-square">
-              {/* Conteúdo da imagem */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-8xl opacity-80">🍽️</span>
-              </div>
-              
+              {/* Imagem real ou fallback */}
+              {produto.image_url && !imageError ? (
+                <img
+                  src={resolveImageUrl(produto.image_url)}
+                  alt={produto.name}
+                  className={`w-full h-full object-cover transition-opacity duration-500 ${
+                    imageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-8xl opacity-80">🍽️</span>
+                </div>
+              )}
+
               {/* Overlay de gradiente */}
-              <div className="absolute inset-0 bg-gradient-to-t from-brown-900/20 to-transparent" />
-              
+              <div className="absolute inset-0 bg-gradient-to-t from-brown-900/20 to-transparent pointer-events-none" />
+
               {/* Badge de categoria */}
-              <div className="absolute top-4 left-4">
+              <div className="absolute top-4 left-4 z-10">
                 <motion.span
                   variants={badgeVariants}
                   initial="initial"
@@ -303,7 +296,7 @@ export function DetalheProduto() {
               </div>
 
               {/* Badge de disponibilidade */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 z-10">
                 <motion.span
                   variants={badgeVariants}
                   initial="initial"
@@ -330,7 +323,7 @@ export function DetalheProduto() {
 
               {/* Ícone de destaque */}
               {produto.destaque && (
-                <div className="absolute bottom-4 left-4">
+                <div className="absolute bottom-4 left-4 z-10">
                   <motion.span
                     variants={badgeVariants}
                     initial="initial"
@@ -347,7 +340,7 @@ export function DetalheProduto() {
             {/* Orbes decorativas */}
             <motion.div
               animate={floatAnimation}
-              className="absolute -top-4 -right-4 w-20 h-20 bg-gold-500/10 rounded-full blur-2xl"
+              className="absolute -top-4 -right-4 w-20 h-20 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"
             />
             <motion.div
               animate={{
@@ -355,11 +348,11 @@ export function DetalheProduto() {
                 transition: {
                   duration: 4,
                   repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1
-                }
+                  ease: 'easeInOut',
+                  delay: 1,
+                },
               }}
-              className="absolute -bottom-4 -left-4 w-16 h-16 bg-amber-500/10 rounded-full blur-2xl"
+              className="absolute -bottom-4 -left-4 w-16 h-16 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"
             />
           </motion.div>
 
@@ -369,7 +362,7 @@ export function DetalheProduto() {
           <motion.div
             variants={contentVariants}
             initial="hidden"
-            animate={isMounted ? "visible" : "hidden"}
+            animate={isMounted ? 'visible' : 'hidden'}
             className="flex flex-col"
           >
             {/* Cabeçalho */}
@@ -384,7 +377,7 @@ export function DetalheProduto() {
                   </span>
                 )}
               </div>
-              
+
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-display text-brown-800">
                 {produto.name}
               </h1>
@@ -403,23 +396,33 @@ export function DetalheProduto() {
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="bg-cream-50 rounded-xl p-3 border border-cream-200">
                 <p className="text-xs text-brown-400">Categoria</p>
-                <p className="text-sm font-medium text-brown-700">{produto.category}</p>
+                <p className="text-sm font-medium text-brown-700">
+                  {produto.category}
+                </p>
               </div>
               {produto.subcategory && (
                 <div className="bg-cream-50 rounded-xl p-3 border border-cream-200">
                   <p className="text-xs text-brown-400">Subcategoria</p>
-                  <p className="text-sm font-medium text-brown-700">{produto.subcategory}</p>
+                  <p className="text-sm font-medium text-brown-700">
+                    {produto.subcategory}
+                  </p>
                 </div>
               )}
               <div className="bg-cream-50 rounded-xl p-3 border border-cream-200">
                 <p className="text-xs text-brown-400">Status</p>
-                <p className={`text-sm font-medium ${isAvailable ? 'text-emerald-600' : 'text-red-500'}`}>
+                <p
+                  className={`text-sm font-medium ${
+                    isAvailable ? 'text-emerald-600' : 'text-red-500'
+                  }`}
+                >
                   {isAvailable ? 'Disponível' : 'Indisponível'}
                 </p>
               </div>
               <div className="bg-cream-50 rounded-xl p-3 border border-cream-200">
                 <p className="text-xs text-brown-400">Código</p>
-                <p className="text-sm font-medium text-brown-700">#{produto.id}</p>
+                <p className="text-sm font-medium text-brown-700">
+                  #{produto.id}
+                </p>
               </div>
             </div>
 
@@ -434,7 +437,9 @@ export function DetalheProduto() {
             {/* Quantidade e Ações */}
             <div className="space-y-4 mt-auto">
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-brown-700">Quantidade:</span>
+                <span className="text-sm font-medium text-brown-700">
+                  Quantidade:
+                </span>
                 <div className="flex items-center gap-1 bg-cream-50 rounded-xl border border-cream-200 p-1">
                   <motion.button
                     variants={quantityVariants}
@@ -478,14 +483,21 @@ export function DetalheProduto() {
                   >
                     <span className="flex items-center justify-center gap-2">
                       <ShoppingCart className="w-5 h-5" />
-                      {isAvailable ? 'Adicionar ao Carrinho' : 'Indisponível'}
+                      {isAvailable
+                        ? 'Adicionar ao Carrinho'
+                        : 'Indisponível'}
                       <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </Button>
                 </motion.div>
 
                 <Link to="/cardapio" className="sm:w-auto">
-                  <Button variant="outline" size="lg" fullWidth className="border-gold-300 text-brown-600 hover:bg-gold-50/50">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    fullWidth
+                    className="border-gold-300 text-brown-600 hover:bg-gold-50/50"
+                  >
                     <span className="flex items-center gap-2">
                       <ArrowLeft className="w-4 h-4" />
                       Voltar
