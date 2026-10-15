@@ -153,7 +153,7 @@ export function Register() {
     setIsLoading(true)
 
     try {
-      const user = await register({ 
+      const { user, alreadyRegistered } = await register({ 
         username: name, 
         email, 
         password, 
@@ -163,7 +163,11 @@ export function Register() {
       showToast.success(
         <div className="flex items-center gap-2">
           <CheckCircle className="w-4 h-4" />
-          <span>Conta criada com sucesso! 🎉</span>
+          <span>
+            {alreadyRegistered
+              ? 'Sua conta já existia. Sessão iniciada!'
+              : 'Conta criada com sucesso! 🎉'}
+          </span>
         </div>
       )
 

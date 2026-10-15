@@ -44,8 +44,9 @@ apiClient.interceptors.response.use(
         break
       case 401:
         error.userMessage = 'Email ou senha incorretos.'
-        // Se for 401, desloga o usuário
-        useAuthStore.getState().logout()
+        if (error.config?.url !== '/token/login') {
+          useAuthStore.getState().logout()
+        }
         break
       case 403:
         error.userMessage = 'Você não tem permissão para realizar esta ação.'

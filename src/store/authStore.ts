@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import axios from 'axios'
 import { authApi } from '@/api/auth'
 import type { User } from '@/types/auth.types'
 
@@ -11,7 +12,7 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string, password: string) => Promise<User>  // ← Retorna User
-  register: (data: { username: string; email: string; password: string; phone?: string }) => Promise<void>
+  register: (data: { username: string; email: string; password: string; phone?: string }) => Promise<{ user: User; alreadyRegistered: boolean }>
   logout: () => void
   checkAuth: () => Promise<void>
   refreshToken: () => Promise<void>
@@ -37,32 +38,32 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (data) => {
-        set({ isLoading: true })
+        let alreadyRegistered = false
         try {
-          // 1. Registra
           await authApi.register(data)
-          
-          // 2. Faz login
-          const loginResponse = await authApi.login(data.email, data.password)
-          
-          // 3. ✅ SALVA O TOKEN PRIMEIRO (e AGUARDA)
-          set({ token: loginResponse.access_token, isAuthenticated: true })
-          
-          // 4. ✅ FORÇA O INTERCEPTOR A USAR O NOVO TOKEN
-          // Pequeno delay para garantir que o estado foi atualizado
-          await new Promise(resolve => setTimeout(resolve, 100))
-          
-          // 5. Busca o usuário (agora com o token disponível)
-          const userData = await authApi.getCurrentUser()
-          
-          // 6. Atualiza o estado
-          set({ user: userData, isLoading: false })
-          
-          return userData
         } catch (error) {
-          set({ isLoading: false })
-          throw error
+          const detail = axios.isAxiosError(error)
+            ? error.response?.data?.detail
+            : undefined
+          const isExistingEmail =
+            axios.isAxiosError(error) &&
+            error.response?.status === 409 &&
+            typeof detail === 'string' &&
+            detail.toLowerCase().includes('email')
+
+          if (!isExistingEmail) {
+            throw error
+          }
+          alreadyRegistered = true
         }
+
+        const loginResponse = await authApi.login(data.email, data.password)
+        set({ token: loginResponse.access_token, isAuthenticated: true })
+
+        const user = await authApi.getCurrentUser()
+        set({ user })
+
+        return { user, alreadyRegistered }
       },
 
       
